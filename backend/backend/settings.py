@@ -84,9 +84,11 @@ DATABASES = {
         'PASSWORD': 'M@dhavan1402',
         'HOST': 'localhost',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
     }
 }
-
+}
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 

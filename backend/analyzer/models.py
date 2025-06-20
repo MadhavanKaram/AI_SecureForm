@@ -1,5 +1,5 @@
 from django.db import models
-class FormSubmission(models.Model):
+class Submission(models.Model):
    
    title = models.CharField(max_length=100)
    form_code = models.TextField()

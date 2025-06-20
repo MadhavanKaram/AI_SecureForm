@@ -1,44 +1,61 @@
-import React, { useEffect, useState } from 'react';
-import { X, MessageSquare } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+// src/components/SearchOverlay.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { X } from 'lucide-react';
 
-function SearchOverlay({ onClose }) {
-  const [history, setHistory] = useState([]);
-  const navigate = useNavigate();
+function SearchOverlay({ onClose, onSelect }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/history/')
-      .then(res => res.json())
-      .then(data => setHistory(data))
-      .catch(() => alert("Couldn't load chat history"));
-  }, []);
+    if (query.trim() === '') {
+      setResults([]);
+      return;
+    }
+
+    const fetchResults = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/search/?q=${encodeURIComponent(query)}`);
+        setResults(response.data);
+      } catch (error) {
+        alert('Failed to load search results.');
+      }
+    };
+
+    fetchResults();
+  }, [query]);
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6">
-      <div className="bg-[#1E1E1E] w-full max-w-2xl rounded-xl p-6 relative text-white shadow-lg">
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-300 hover:text-white">
-          <X size={20} />
-        </button>
-        <input
-          className="w-full mb-4 p-3 rounded bg-[#2C2C2C] border border-gray-700 focus:outline-none"
-          placeholder="Search chats..."
-        />
-
-        <p className="text-sm text-gray-400 mb-2">Today</p>
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {history.map((chat) => (
-            <div
-              key={chat.id}
-              className="flex items-center gap-2 p-3 rounded-lg hover:bg-[#2A2A2A] cursor-pointer"
-              onClick={() => {
-                onClose();
-                navigate('/history');
-              }}
-            >
-              <MessageSquare size={18} />
-              <span className="truncate">{chat.title}</span>
-            </div>
-          ))}
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-start pt-20">
+      <div className="bg-[#1e1e1e] w-full max-w-2xl rounded-lg shadow-lg">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700">
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="bg-transparent text-white border-none outline-none w-full placeholder-gray-400"
+            autoFocus
+          />
+          <button onClick={onClose} className="text-gray-400 hover:text-white ml-2">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="max-h-[400px] overflow-y-auto p-4">
+          {results.length === 0 ? (
+            <div className="text-gray-400 text-center py-4">No results found</div>
+          ) : (
+            results.map((item, index) => (
+              <div
+                key={item.id || index}
+                className="flex items-center gap-3 text-white py-2 px-4 hover:bg-gray-700 rounded cursor-pointer"
+                onClick={() => onSelect(item)}
+              >
+                <div className="font-medium">{item.title || 'Untitled Submission'}</div>
+                <div className="text-sm text-gray-400 ml-2">{item.created_at ? new Date(item.created_at).toLocaleString() : ''}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -46,3 +63,7 @@ function SearchOverlay({ onClose }) {
 }
 
 export default SearchOverlay;
+/*
+Example usage of rendering a results array, showing either "No results found" or mapping over results.
+Make sure to replace 'results' with your actual data if needed.
+*/

@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import FormSubmission
+from .models import Submission
 
-class FormSubmissionSerializer(serializers.ModelSerializer):
+class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FormSubmission
-        fields = '__all__'
+        model = Submission
+        fields = ['id', 'title', 'form_code', 'analysis_result', 'created_at']
