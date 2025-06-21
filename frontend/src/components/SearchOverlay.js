@@ -8,11 +8,7 @@ function SearchOverlay({ onClose, onSelect }) {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    if (query.trim() === '') {
-      setResults([]);
-      return;
-    }
-
+    // Always fetch results, even if query is empty (backend will return recent forms)
     const fetchResults = async () => {
       try {
         const response = await axios.get(`http://localhost:8000/api/search/?q=${encodeURIComponent(query)}`);
@@ -48,11 +44,18 @@ function SearchOverlay({ onClose, onSelect }) {
             results.map((item, index) => (
               <div
                 key={item.id || index}
-                className="flex items-center gap-3 text-white py-2 px-4 hover:bg-gray-700 rounded cursor-pointer"
+                className="flex items-center gap-3 text-white py-2 px-4 hover:bg-gray-700 rounded cursor-pointer border-b border-gray-800 last:border-b-0"
                 onClick={() => onSelect(item)}
               >
-                <div className="font-medium">{item.title || 'Untitled Submission'}</div>
-                <div className="text-sm text-gray-400 ml-2">{item.created_at ? new Date(item.created_at).toLocaleString() : ''}</div>
+                <div className="font-bold text-indigo-300">
+                  {item.title || 'Untitled Submission'}
+                </div>
+                <div className="text-xs text-gray-400 ml-2 italic">
+                  {item.form_code && item.form_code.length < 40 ? item.form_code : (item.form_code ? item.form_code.slice(0, 40) + '...' : '')}
+                </div>
+                <div className="text-sm text-gray-400 ml-auto">
+                  {item.created_at ? new Date(item.created_at).toLocaleString() : ''}
+                </div>
               </div>
             ))
           )}

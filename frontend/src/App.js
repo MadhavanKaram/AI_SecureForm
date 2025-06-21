@@ -5,6 +5,7 @@ import FormAnalyzer from './components/FormAnalyzer';
 import HistoryPage from './components/HistoryPage';
 import SearchOverlay from './components/SearchOverlay';
 import SidebarButton from './components/SidebarButton';
+import HomePage from './components/HomePage';
 import './App.css';
 
 function App() {
@@ -58,7 +59,8 @@ function App() {
       label="New Chat"
       collapsed={collapsed}
       onClick={() => {
-        formRef.current?.resetForm(); // 🔥 Reset form and result
+        formRef.current?.resetForm();
+        window.location.href = '/analyzer'; // Go to analyzer page
       }}
     />
     <SidebarButton icon={Search} label="Search Chats" collapsed={collapsed} onClick={() => setShowSearch(true)} />
@@ -70,7 +72,7 @@ function App() {
       icon={MessageSquare}
       label="AI Form Security Analyzer"
       collapsed={collapsed}
-      to="/"
+      to="/analyzer"
     />
     <SidebarButton
       icon={MessageSquare}
@@ -84,7 +86,8 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 p-6">
           <Routes>
-            <Route path="/" element={<FormAnalyzer ref={formRef} />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/analyzer" element={<FormAnalyzer ref={formRef} />} />
             <Route path="/history" element={<HistoryPage />} />
           </Routes>
         </main>

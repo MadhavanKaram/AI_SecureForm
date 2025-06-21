@@ -6,12 +6,18 @@ from .serializers import SubmissionSerializer
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
+from rest_framework.permissions import IsAuthenticated
 
 # analyzer/views.py
 class SubmissionSearchView(APIView):
     def get(self, request):
         query = request.GET.get('q', '')
-        submissions = Submission.objects.filter(form_code__icontains=query).order_by('-created_at')
+        if query.strip() == '':
+            # If no query, return the most recent 10 submissions
+            submissions = Submission.objects.all().order_by('-created_at')[:10]
+        else:
+            submissions = Submission.objects.filter(form_code__icontains=query).order_by('-created_at')
         serializer = SubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
 
@@ -20,18 +26,20 @@ class SubmitFormView(APIView):
         form_code = request.data.get('form_code')
         if not form_code:
             return Response({'error': 'No form code provided'}, status=400)
-
-        # Dummy analysis (replace with real logic)
-        analysis = "Looks like a basic login form.\nCSRF token missing."
-        score = 45
+        analysis_result, score, badges, code_type, recommendation = analyze_form_code(form_code)
+        title = f"{code_type} Form" if code_type and code_type != 'Unknown' else "Untitled Submission"
         submission = Submission.objects.create(
-            content=form_code,
-            result=analysis,
-            score=score
+            title=title,
+            form_code=form_code,
+            analysis_result=analysis_result,
+            score=score,
+            badges=badges
         )
         return Response({
             'score': score,
-            'analysis': analysis,
+            'analysis_result': analysis_result,
+            'badges': badges,
+            'recommendation': recommendation,
             'submission_id': submission.id
         })
 
@@ -59,8 +67,8 @@ class SubmissionHistoryView(APIView):
                 "form_code": sub.form_code,
                 "analysis_result": sub.analysis_result,
                 "created_at": sub.created_at,
-                "score": None,
-                "badges": []
+                "score": sub.score,
+                "badges": sub.badges
             })
 
         return Response(data)
@@ -70,15 +78,10 @@ class AnalyzeFormView(APIView):
         form_code = request.data.get('form_code')
         if not form_code:
             return Response({'error': 'No form code provided'}, status=400)
-        # Use your real analysis logic here
-        # For now, use dummy values
-        # analysis_result, score, badges = analyze_form_code(form_code)
-        analysis_result = "Looks like a basic login form. CSRF token missing."
-        score = 45
-        badges = ["XSS Risk", "No CSRF"]
-        # Optionally save to DB
+        analysis_result, score, badges, code_type, recommendation = analyze_form_code(form_code)
+        title = f"{code_type} Form" if code_type and code_type != 'Unknown' else "Untitled Submission"
         submission = Submission.objects.create(
-            title="Analyzed Submission",
+            title=title,
             form_code=form_code,
             analysis_result=analysis_result,
             score=score,
@@ -88,5 +91,22 @@ class AnalyzeFormView(APIView):
             'score': score,
             'analysis_result': analysis_result,
             'badges': badges,
+            'recommendation': recommendation,
             'submission_id': submission.id
         })
+
+class UserDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        if user.is_authenticated:
+            return Response({
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+            })
+        else:
+            return Response({'error': 'Not authenticated'}, status=401)
