@@ -37,6 +37,7 @@ const FormAnalyzer = forwardRef((props, ref) => {
   const [analysisResult, setAnalysisResult] = useState('');
   const [score, setScore] = useState(null);
   const [badges, setBadges] = useState([]);
+  const [secureCode, setSecureCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -59,6 +60,7 @@ const FormAnalyzer = forwardRef((props, ref) => {
     setLoading(true);
     setAnalysisResult('');
     setScore(0);
+    setSecureCode('');
     try {
       const response = await axios.post("http://localhost:8000/api/analyze/", {
         form_code: formCode,
@@ -66,17 +68,19 @@ const FormAnalyzer = forwardRef((props, ref) => {
       setScore(response.data.score);
       setAnalysisResult(response.data.analysis_result);
       setBadges(response.data.badges || []);
+      setSecureCode(response.data.secure_code || '');
     } catch (error) {
       setScore(0);
       setAnalysisResult("❌ Error analyzing the form.");
       setBadges([]);
+      setSecureCode('');
       console.error("Form submission error:", error);
     }
     setLoading(false);
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-8">
+    <div className="max-w-8xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-8">
       {/* Left: Form */}
       <div className="flex-1">
         <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 text-center flex items-center justify-center gap-2">
@@ -107,7 +111,7 @@ const FormAnalyzer = forwardRef((props, ref) => {
       {/* Right: Result */}
       <div className="flex-1 flex flex-col justify-start">
         {analysisResult && (
-          <div className="p-6 bg-gray-50 rounded-xl shadow-inner border border-indigo-100 animate-fade-in">
+          <div className="p-6 bg-gray-50 rounded-xl shadow-inner border border-indigo-100 animate-fade-in max-h-[80vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-indigo-700 mb-2 flex items-center gap-2">
               <span role="img" aria-label="result">📊</span> Analysis Result
             </h3>
@@ -139,6 +143,20 @@ const FormAnalyzer = forwardRef((props, ref) => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {(secureCode || true) && (
+              <div className="mt-6">
+                <h4 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">
+                  <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
+                </h4>
+                {secureCode ? (
+                  <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
+                    {secureCode}
+                  </pre>
+                ) : (
+                  <div className="text-gray-600 italic">No secure code suggestion available.</div>
+                )}
               </div>
             )}
           </div>

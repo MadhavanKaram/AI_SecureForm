@@ -79,6 +79,23 @@ class AnalyzeFormView(APIView):
         if not form_code:
             return Response({'error': 'No form code provided'}, status=400)
         analysis_result, score, badges, code_type, recommendation = analyze_form_code(form_code)
+        # Extract secure code from <RECOMMENDATION> if present
+        secure_code = ''
+        if recommendation:
+            import re
+            # Try to extract code block (triple backticks or lines starting with code)
+            code_block = re.search(r'```([\s\S]+?)```', recommendation)
+            if code_block:
+                secure_code = code_block.group(1).strip()
+            else:
+                # Fallback: take lines until 'Explanation' or similar
+                lines = recommendation.splitlines()
+                code_lines = []
+                for line in lines:
+                    if line.strip().lower().startswith('explanation'):
+                        break
+                    code_lines.append(line)
+                secure_code = '\n'.join(code_lines).strip()
         title = f"{code_type} Form" if code_type and code_type != 'Unknown' else "Untitled Submission"
         submission = Submission.objects.create(
             title=title,
@@ -92,6 +109,7 @@ class AnalyzeFormView(APIView):
             'analysis_result': analysis_result,
             'badges': badges,
             'recommendation': recommendation,
+            'secure_code': secure_code,
             'submission_id': submission.id
         })
 

@@ -86,8 +86,8 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 p-6">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/analyzer" element={<FormAnalyzer ref={formRef} />} />
+            {/* <Route path="/" element={<HomePage />} /> */}
+            <Route path="/" element={<FormAnalyzer ref={formRef} />} />
             <Route path="/history" element={<HistoryPage />} />
           </Routes>
         </main>
