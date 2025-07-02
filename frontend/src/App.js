@@ -2,10 +2,8 @@ import React, { useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import { Pencil, Search, MessageSquare, Menu } from 'lucide-react';
 import FormAnalyzer from './components/FormAnalyzer';
-import HistoryPage from './components/HistoryPage';
 import SearchOverlay from './components/SearchOverlay';
 import SidebarButton from './components/SidebarButton';
-import HomePage from './components/HomePage';
 import './App.css';
 
 function App() {
@@ -31,6 +29,18 @@ function App() {
     </NavLink>
   );
   // Increase icon size for larger appearance
+  const handleSearchSelect = (item) => {
+    if (formRef.current && formRef.current.setFormData) {
+      formRef.current.setFormData(
+        item.form_code,
+        item.analysis_result,
+        item.score,
+        item.badges,
+        item.secure_code // Always show secure code suggestion for previous chats
+      );
+    }
+    setShowSearch(false);
+  };
 
   return (
     <Router>
@@ -60,7 +70,10 @@ function App() {
       collapsed={collapsed}
       onClick={() => {
         formRef.current?.resetForm();
-        window.location.href = '/analyzer'; // Go to analyzer page
+        // Only reset and navigate if not already on analyzer
+        if (window.location.pathname !== "/") {
+          window.location.href = "/";
+        }
       }}
     />
     <SidebarButton icon={Search} label="Search Chats" collapsed={collapsed} onClick={() => setShowSearch(true)} />
@@ -72,14 +85,10 @@ function App() {
       icon={MessageSquare}
       label="AI Form Security Analyzer"
       collapsed={collapsed}
-      to="/analyzer"
+      to="/"
+      // Remove resetForm here to preserve analyzer state
     />
-    <SidebarButton
-      icon={MessageSquare}
-      label="Submission History"
-      collapsed={collapsed}
-      to="/history"
-    />
+    {/* Submission History removed */}
   </div>
 </aside>
 
@@ -88,12 +97,17 @@ function App() {
           <Routes>
             {/* <Route path="/" element={<HomePage />} /> */}
             <Route path="/" element={<FormAnalyzer ref={formRef} />} />
-            <Route path="/history" element={<HistoryPage />} />
+            {/* <Route path="/history" element={<HistoryPage />} /> Submission History route removed */}
           </Routes>
         </main>
 
         {/* Search Modal */}
-        {showSearch && <SearchOverlay onClose={() => setShowSearch(false)} />}
+        {showSearch && (
+          <SearchOverlay 
+            onClose={() => setShowSearch(false)} 
+            onSelect={handleSearchSelect}
+          />
+        )}
       </div>
     </Router>
   );

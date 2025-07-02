@@ -7,6 +7,7 @@ class Submission(models.Model):
    created_at = models.DateTimeField(auto_now_add=True)
    score = models.IntegerField(null=True, blank=True)
    badges = models.JSONField(null=True, blank=True)
+   secure_code = models.TextField(null=True, blank=True)
 
 
 

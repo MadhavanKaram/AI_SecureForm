@@ -11,6 +11,12 @@ backend/*.py[cod]
 backend/*.sqlite3
 backend/staticfiles/
 backend/local_settings.py
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/analyzer/__pycache__/
+backend/analyzer/migrations/__pycache__/
 
 # Node/React (Frontend)
 frontend/node_modules/

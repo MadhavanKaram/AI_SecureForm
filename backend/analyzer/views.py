@@ -102,7 +102,8 @@ class AnalyzeFormView(APIView):
             form_code=form_code,
             analysis_result=analysis_result,
             score=score,
-            badges=badges
+            badges=badges,
+            secure_code=secure_code
         )
         return Response({
             'score': score,

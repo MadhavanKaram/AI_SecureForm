@@ -46,12 +46,14 @@ const FormAnalyzer = forwardRef((props, ref) => {
       setAnalysisResult('');
       setScore(null);
       setBadges([]);
+      setSecureCode('');
     },
-    setFormData: (code, analysis, score, badges) => {
+    setFormData: (code, analysis, score, badges, secureCodeValue = '', showSecureCode = true) => {
       setFormCode(code || '');
       setAnalysisResult(analysis || '');
       setScore(typeof score === 'number' ? score : 0);
       setBadges(Array.isArray(badges) ? badges : []);
+      setSecureCode(secureCodeValue || '');
     }
   }));
 
@@ -80,9 +82,9 @@ const FormAnalyzer = forwardRef((props, ref) => {
   };
 
   return (
-    <div className="max-w-8xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-8">
+    <div className="max-w-[1600px] mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-8">
       {/* Left: Form */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-[350px] max-w-[520px]">
         <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 text-center flex items-center justify-center gap-2">
           <span role="img" aria-label="shield">🛡️</span> AI Secure Form Analyzer
         </h1>
@@ -109,24 +111,24 @@ const FormAnalyzer = forwardRef((props, ref) => {
         </form>
       </div>
       {/* Right: Result */}
-      <div className="flex-1 flex flex-col justify-start">
+      <div className="flex-1 min-w-[350px] max-w-[800px] flex flex-col justify-start">
         {analysisResult && (
-          <div className="p-6 bg-gray-50 rounded-xl shadow-inner border border-indigo-100 animate-fade-in max-h-[80vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-indigo-700 mb-2 flex items-center gap-2">
+          <div className="p-6 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in max-h-[80vh] overflow-y-auto flex flex-col">
+            <h3 className="text-2xl font-extrabold text-purple-700 mb-4 flex items-center gap-2">
               <span role="img" aria-label="result">📊</span> Analysis Result
             </h3>
-            <div className="text-gray-800 mb-4 whitespace-pre-line">
+            <div className="text-gray-800 mb-4 whitespace-pre-line text-lg font-normal">
               {formatSummaryWithBoldHeadings(analysisResult)}
             </div>
             <div className="flex items-center gap-4 mb-4">
-              <span className="flex items-center gap-2 text-lg font-bold text-indigo-700 mb-0">
+              <span className="flex items-center gap-2 text-xl font-bold text-purple-700 mb-0">
                 <span role="img" aria-label="score">🏅</span> Score
               </span>
               <SecurityBadge score={score} />
             </div>
             {badges && badges.length > 0 && (
               <div className="mt-4">
-                <span className="flex items-center gap-2 text-lg font-bold text-purple-700 mb-2">
+                <span className="flex items-center gap-2 text-xl font-bold text-yellow-700 mb-2">
                   <span role="img" aria-label="badges">🏷️</span> Badges
                 </span>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -145,18 +147,25 @@ const FormAnalyzer = forwardRef((props, ref) => {
                 </div>
               </div>
             )}
-            {(secureCode || true) && (
+            {secureCode && (
               <div className="mt-6">
                 <h4 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">
                   <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
                 </h4>
-                {secureCode ? (
-                  <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
-                    {secureCode}
-                  </pre>
-                ) : (
-                  <div className="text-gray-600 italic">No secure code suggestion available.</div>
-                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold"
+                    onClick={() => {
+                      navigator.clipboard.writeText(secureCode);
+                    }}
+                  >
+                    Copy Code
+                  </button>
+                  <span className="text-xs text-gray-500">Copy the secure code suggestion</span>
+                </div>
+                <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
+                  {secureCode}
+                </pre>
               </div>
             )}
           </div>
