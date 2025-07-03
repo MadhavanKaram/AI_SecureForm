@@ -12,6 +12,7 @@ import './App.css';
 function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const formRef = useRef();
   // Set larger icon size when sidebar is collapsed
   // e.g., 32px when collapsed, 20px when expanded
@@ -31,6 +32,39 @@ function App() {
       {collapsed ? <span title={label}>{label[0]}</span> : label}
     </NavLink>
   );
+  // On mount, check backend for real auth status
+  React.useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('http://localhost:8000/api/check-auth/', { credentials: 'include' });
+        const data = await res.json();
+        if (data && data.authenticated) {
+          setIsLoggedIn(true);
+          localStorage.setItem('sf_logged_in', '1');
+        } else {
+          setIsLoggedIn(false);
+          localStorage.removeItem('sf_logged_in');
+        }
+      } catch {
+        setIsLoggedIn(false);
+        localStorage.removeItem('sf_logged_in');
+      }
+    }
+    checkAuth();
+    // Listen for login/logout changes in localStorage (other tabs)
+    const onStorage = () => {
+      setIsLoggedIn(localStorage.getItem('sf_logged_in') === '1');
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+  // Also update on login/logout in this tab
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIsLoggedIn(localStorage.getItem('sf_logged_in') === '1');
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
   // Increase icon size for larger appearance
   const handleSearchSelect = (item) => {
     if (formRef.current && formRef.current.setFormData) {
@@ -47,53 +81,61 @@ function App() {
 
   return (
     <Router>
-      <div className="flex min-h-screen bg-gray-100 relative">
+      <div className="flex min-h-screen h-screen bg-gray-100 relative">
         {/* Sidebar */}
-       <aside
-  className={`bg-gray-900 text-white h-screen flex flex-col transition-all duration-300 ease-in-out ${
-    collapsed ? 'w-16' : 'w-64'
-  }`}
->
-  {/* Collapse Button: top-right when expanded, centered when collapsed */}
-  <div className={`flex ${collapsed ? 'justify-center' : 'justify-end'} p-2`}>
-    <button
-      onClick={() => setCollapsed(!collapsed)}
-      className="text-gray-400 hover:text-white"
-      title="Toggle Sidebar"
-    >
-      <Menu size={collapsed ? 28 : 20} />
-    </button>
-  </div>
+        <aside
+          className={`bg-gray-900 text-white h-full min-h-screen flex flex-col transition-all duration-300 ease-in-out ${
+            collapsed ? 'w-16' : 'w-64'
+          }`}
+        >
+          {/* Collapse Button: top-right when expanded, centered when collapsed */}
+          <div className={`flex ${collapsed ? 'justify-center' : 'justify-end'} p-2`}>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="text-gray-400 hover:text-white"
+              title="Toggle Sidebar"
+            >
+              <Menu size={collapsed ? 28 : 20} />
+            </button>
+          </div>
 
-  {/* Utility Buttons */}
-  <div className="space-y-3 px-2 mb-6">
-    <SidebarButton
-      icon={Pencil}
-      label="New Chat"
-      collapsed={collapsed}
-      onClick={() => {
-        formRef.current?.resetForm();
-        // Only reset and navigate if not already on analyzer
-        if (window.location.pathname !== "/") {
-          window.location.href = "/";
-        }
-      }}
-    />
-    <SidebarButton icon={Search} label="Search Chats" collapsed={collapsed} onClick={() => setShowSearch(true)} />
-  </div>
-
-  {/* Chats Section (Nav Links) */}
-  <div className="space-y-1 px-2">
-    <SidebarButton
-      icon={MessageSquare}
-      label="AI Form Security Analyzer"
-      collapsed={collapsed}
-      to="/"
-      // Remove resetForm here to preserve analyzer state
-    />
-    {/* Submission History removed */}
-  </div>
-</aside>
+          {/* Utility Buttons */}
+          <div className="space-y-3 px-2 mb-6">
+            <SidebarButton
+              icon={Pencil}
+              label="New Chat"
+              collapsed={collapsed}
+              onClick={() => {
+                if (isLoggedIn) {
+                  formRef.current?.resetForm();
+                  if (window.location.pathname !== "/analyzer") {
+                    window.location.href = "/analyzer";
+                  }
+                }
+              }}
+            />
+            <SidebarButton
+              icon={Search}
+              label="Search Chats"
+              collapsed={collapsed}
+              onClick={() => {
+                if (isLoggedIn) {
+                  setShowSearch(true);
+                }
+              }}
+            />
+            <SidebarButton
+              icon={MessageSquare}
+              label="AI Form Security Analyzer"
+              collapsed={collapsed}
+              onClick={() => {
+                if (isLoggedIn) {
+                  window.location.href = "/analyzer";
+                }
+              }}
+            />
+          </div>
+        </aside>
 
         {/* Main Content */}
         <main className="flex-1 p-6">

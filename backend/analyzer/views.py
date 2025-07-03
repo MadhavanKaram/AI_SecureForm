@@ -1,3 +1,18 @@
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.http import JsonResponse
+
+# API endpoint to check authentication status
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([AllowAny])
+def check_auth_view(request):
+    if request.user.is_authenticated:
+        return JsonResponse({'authenticated': True})
+    else:
+        return JsonResponse({'authenticated': False})
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Submission

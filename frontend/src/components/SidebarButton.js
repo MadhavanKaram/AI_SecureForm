@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const SidebarButton = ({ icon: Icon, label, collapsed, onClick, to }) => {
+const SidebarButton = ({ icon: Icon, label, collapsed, onClick, to, disabled }) => {
   const navigate = useNavigate();
 
+
   const handleClick = () => {
+    if (disabled) return;
     if (onClick) onClick();
     if (to) navigate(to);
   };
@@ -13,7 +15,8 @@ const SidebarButton = ({ icon: Icon, label, collapsed, onClick, to }) => {
     <div className="relative group">
       <button
         onClick={handleClick}
-        className="flex items-center gap-3 px-2 py-2 w-full rounded hover:bg-gray-800 text-sm"
+        className={`flex items-center gap-3 px-2 py-2 w-full rounded text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'}`}
+        disabled={disabled}
       >
         <Icon size={collapsed ? 26 : 18} />
         {!collapsed && <span>{label}</span>}
