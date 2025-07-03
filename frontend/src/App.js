@@ -4,6 +4,9 @@ import { Pencil, Search, MessageSquare, Menu } from 'lucide-react';
 import FormAnalyzer from './components/FormAnalyzer';
 import SearchOverlay from './components/SearchOverlay';
 import SidebarButton from './components/SidebarButton';
+import HomePage from './components/HomePage';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
 import './App.css';
 
 function App() {
@@ -95,9 +98,10 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 p-6">
           <Routes>
-            {/* <Route path="/" element={<HomePage />} /> */}
-            <Route path="/" element={<FormAnalyzer ref={formRef} />} />
-            {/* <Route path="/history" element={<HistoryPage />} /> Submission History route removed */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/analyzer" element={<FormAnalyzer ref={formRef} />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
           </Routes>
         </main>
 

@@ -7,6 +7,7 @@ from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 
 # analyzer/views.py
@@ -129,3 +130,29 @@ class UserDetailsView(APIView):
             })
         else:
             return Response({'error': 'Not authenticated'}, status=401)
+
+class SignupView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        if not username or not email or not password:
+            return Response({'success': False, 'error': 'All fields are required.'}, status=400)
+        if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
+            return Response({'success': False, 'error': 'Username or email already exists.'}, status=400)
+        user = User.objects.create_user(username=username, email=email, password=password)
+        return Response({'success': True})
+
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'success': False, 'error': 'Invalid email or password.'}, status=400)
+        user = authenticate(username=user.username, password=password)
+        if user is not None:
+            return Response({'success': True})
+        else:
+            return Response({'success': False, 'error': 'Invalid email or password.'}, status=400)
