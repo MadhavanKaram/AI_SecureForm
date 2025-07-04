@@ -1,3 +1,72 @@
+from .chat_models import ChatSession, ChatMessage
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from django.utils import timezone
+
+# Multi-turn chat endpoint
+# Multi-turn chat endpoint
+from rest_framework.permissions import AllowAny
+
+class ChatAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # print("ChatAPIView POST called")  # Remove or comment out debug prints
+        import os
+        import openai
+
+        messages = request.data.get('messages', [])
+        if not messages:
+            return Response({'error': 'No messages provided.'}, status=400)
+
+        # Convert 'ai' role to 'assistant' for OpenAI API
+        openai_messages = []
+        for m in messages:
+            role = 'assistant' if m['role'] == 'ai' else m['role']
+            openai_messages.append({'role': role, 'content': m['content']})
+
+        # Use Azure OpenAI for multi-turn chat
+        try:
+            from openai import AzureOpenAI
+            api_key = os.getenv("AZURE_OPENAI_API_KEY")
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+            api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+            deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+
+            if not all([api_key, azure_endpoint, api_version, deployment]):
+                raise Exception("One or more Azure OpenAI environment variables are missing.")
+
+            client = AzureOpenAI(
+                api_key=api_key,
+                azure_endpoint=azure_endpoint,
+                api_version=api_version
+            )
+
+            response = client.chat.completions.create(
+                model=deployment,
+                messages=openai_messages,
+                temperature=0.7,
+                max_tokens=512
+            )
+
+            ai_reply = response.choices[0].message.content
+
+        except Exception as e:
+            print("CHAT API ERROR:", str(e))  # Log the error to the console
+            ai_reply = f"Sorry, there was an error: {str(e)}"
+
+
+        # Optionally, save the chat session and messages only if user is authenticated
+        if request.user.is_authenticated:
+            session, _ = ChatSession.objects.get_or_create(user=request.user, updated_at__date=timezone.now().date())
+            for m in messages:
+                ChatMessage.objects.create(session=session, role=m['role'], content=m['content'])
+            ChatMessage.objects.create(session=session, role='ai', content=ai_reply)
+
+        return Response({'reply': ai_reply})
+
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse

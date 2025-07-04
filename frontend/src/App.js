@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Pencil, Search, MessageSquare, Menu } from 'lucide-react';
+import { Pencil, Search, MessageSquare, Menu, MessageCircle } from 'lucide-react';
 import FormAnalyzer from './components/FormAnalyzer';
+import ChatWithAI from './components/ChatWithAI';
 import SearchOverlay from './components/SearchOverlay';
 import SidebarButton from './components/SidebarButton';
 import HomePage from './components/HomePage';
@@ -105,34 +106,39 @@ function App() {
               icon={Pencil}
               label="New Chat"
               collapsed={collapsed}
+              to={isLoggedIn ? "/analyzer" : undefined}
               onClick={() => {
                 if (isLoggedIn) {
                   formRef.current?.resetForm();
-                  if (window.location.pathname !== "/analyzer") {
-                    window.location.href = "/analyzer";
-                  }
                 }
               }}
+              disabled={!isLoggedIn}
             />
             <SidebarButton
               icon={Search}
               label="Search Chats"
               collapsed={collapsed}
+              to={isLoggedIn ? "/analyzer" : undefined}
               onClick={() => {
                 if (isLoggedIn) {
                   setShowSearch(true);
                 }
               }}
+              disabled={!isLoggedIn}
             />
             <SidebarButton
               icon={MessageSquare}
               label="AI Form Security Analyzer"
               collapsed={collapsed}
-              onClick={() => {
-                if (isLoggedIn) {
-                  window.location.href = "/analyzer";
-                }
-              }}
+              to={isLoggedIn ? "/analyzer" : undefined}
+              disabled={!isLoggedIn}
+            />
+            <SidebarButton
+              icon={MessageCircle}
+              label="Chat with AI"
+              collapsed={collapsed}
+              to={isLoggedIn ? "/chat" : undefined}
+              disabled={!isLoggedIn}
             />
           </div>
         </aside>
@@ -142,6 +148,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/analyzer" element={<FormAnalyzer ref={formRef} />} />
+            <Route path="/chat" element={<ChatWithAI />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
           </Routes>
