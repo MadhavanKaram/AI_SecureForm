@@ -2,7 +2,99 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 // Utility to format AI response with bold subheadings and points
 // Formatter for AI response: bold subheadings, point-wise, similar to FormAnalyzer
+// Unified formatter for AI response: bold subheadings, point-wise, matches FormAnalyzer
+// Improved formatter for AI response: supports markdown headings, bold, code blocks, lists, and matches FormAnalyzer
 function formatAIResponse(text) {
+  const lines = text.split('\n');
+  let inCode = false;
+  let codeLang = '';
+  let codeBuffer = [];
+  const elements = [];
+  lines.forEach((line, idx) => {
+    // Code block start/end
+    const codeStart = line.match(/^```([a-zA-Z0-9]*)/);
+    if (codeStart) {
+      if (!inCode) {
+        inCode = true;
+        codeLang = codeStart[1] || '';
+        codeBuffer = [];
+      } else {
+        // End code block
+        elements.push(
+          <pre key={idx} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
+            <code>{codeBuffer.join('\n')}</code>
+          </pre>
+        );
+        inCode = false;
+        codeLang = '';
+        codeBuffer = [];
+      }
+      return;
+    }
+    if (inCode) {
+      codeBuffer.push(line);
+      return;
+    }
+    // Markdown heading (###, ##, #)
+    let headingMatch = line.match(/^(#+)\s*(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const content = headingMatch[2];
+      elements.push(
+        <div key={idx} style={{ fontWeight: 700, fontSize: level === 1 ? '1.5em' : level === 2 ? '1.2em' : '1.1em', margin: '8px 0' }}>
+          {content.replace(/\*\*(.*?)\*\*/g, (m, p1) => p1)}
+        </div>
+      );
+      return;
+    }
+    // Bold lines like '1. **Heading**: explanation' or '1. Heading: explanation'
+    let numbered = line.match(/^([0-9]+\.\s*)(\*\*([\w\s\-]+)\*\*|[A-Z][\w\s\-]+):(.*)$/);
+    if (numbered) {
+      let heading = numbered[2].replace(/\*\*/g, '');
+      let explanation = numbered[4] || '';
+      elements.push(<div key={idx}><b>{numbered[1] + heading}</b>:{explanation}</div>);
+      return;
+    }
+    // Bold lines like '**Heading**: explanation' or 'Heading: explanation'
+    let colonMatch = line.match(/^(\*\*([\w\s\-]+)\*\*|[A-Z][\w\s\-]+):(.*)$/);
+    if (colonMatch) {
+      let heading = colonMatch[1].replace(/\*\*/g, '');
+      let explanation = colonMatch[3] || '';
+      elements.push(<div key={idx}><b>{heading}</b>:{explanation}</div>);
+      return;
+    }
+    // Bullet points (lines starting with '-', '*', or numbered)
+    if (/^\s*[-*]\s+/.test(line)) {
+      elements.push(<div key={idx} style={{marginLeft: 24, marginBottom: 4}}>&bull; {line.replace(/^\s*[-*]\s+/, '')}</div>);
+      return;
+    }
+    // Numbered list (not heading)
+    if (/^\s*\d+\.\s+/.test(line)) {
+      elements.push(<div key={idx} style={{marginLeft: 24, marginBottom: 4}}>{line}</div>);
+      return;
+    }
+    // Bold inline
+    let inlineBold = line.replace(/\*\*(.*?)\*\*/g, (m, p1) => `<b>${p1}</b>`);
+    if (inlineBold !== line) {
+      elements.push(<div key={idx} dangerouslySetInnerHTML={{ __html: inlineBold }} />);
+      return;
+    }
+    // Empty line
+    if (line.trim() === '') {
+      elements.push(<div key={idx} style={{height: 8}} />);
+      return;
+    }
+    // Normal text
+    elements.push(<div key={idx} style={{marginBottom: 4}}>{line}</div>);
+  });
+  // If code block was not closed
+  if (inCode && codeBuffer.length > 0) {
+    elements.push(
+      <pre key={lines.length} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
+        <code>{codeBuffer.join('\n')}</code>
+      </pre>
+    );
+  }
   return (
     <div
       style={{
@@ -16,32 +108,7 @@ function formatAIResponse(text) {
         lineHeight: 1.7,
       }}
     >
-      {text.split('\n').map((line, idx) => {
-        // Bold lines like '1. **Heading**: explanation' or '1. Heading: explanation'
-        let numbered = line.match(/^([0-9]+\.\s*)(\*\*[\w\s\-]+\*\*|[A-Z][\w\s\-]+):(.*)$/);
-        if (numbered) {
-          let heading = numbered[2].replace(/\*\*/g, '');
-          let explanation = numbered[3] || '';
-          return <div key={idx} style={{marginBottom: 4}}><b>{numbered[1] + heading}</b>:{explanation}</div>;
-        }
-        // Bold lines like '**Heading**: explanation' or 'Heading: explanation'
-        let colonMatch = line.match(/^(\*\*[\w\s\-]+\*\*|[A-Z][\w\s\-]+):(.*)$/);
-        if (colonMatch) {
-          let heading = colonMatch[1].replace(/\*\*/g, '');
-          let explanation = colonMatch[2] || '';
-          return <div key={idx} style={{marginBottom: 4}}><b>{heading}</b>:{explanation}</div>;
-        }
-        // Bullet points (lines starting with '-', '*', or numbered)
-        if (/^\s*[-*]\s+/.test(line) || /^\s*\d+\.\s+/.test(line)) {
-          return <div key={idx} style={{marginLeft: 24, marginBottom: 4}}>&bull; {line.replace(/^\s*[-*]\s+|^\s*\d+\.\s+/, '')}</div>;
-        }
-        // Empty line
-        if (line.trim() === '') {
-          return <div key={idx} style={{height: 8}} />;
-        }
-        // Normal text
-        return <div key={idx} style={{marginBottom: 4}}>{line}</div>;
-      })}
+      {elements}
     </div>
   );
 }

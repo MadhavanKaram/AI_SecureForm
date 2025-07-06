@@ -2,6 +2,42 @@ import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import SecurityBadge from './SecurityBadge';
 import axios from 'axios';
 
+// SecureCodeBlock component with copy and popup
+function SecureCodeBlock({ code }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="mt-6 relative">
+      <h4 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">
+        <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
+      </h4>
+      <div className="flex items-center gap-2 mb-2">
+        <button
+          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold"
+          onClick={handleCopy}
+        >
+          Copy Code
+        </button>
+        <span className="text-xs text-gray-500">Copy the secure code suggestion</span>
+      </div>
+      <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
+        {code}
+      </pre>
+      {copied && (
+        <div className="absolute top-0 right-0 mt-2 mr-2 bg-green-500 text-white px-3 py-1 rounded shadow text-xs font-semibold animate-fade-in-out z-50">
+          Copied!
+        </div>
+      )}
+    </div>
+  );
+}
+
 const RISK_SOLUTIONS = {
   'XSS Risk': 'To prevent XSS (Cross-Site Scripting), always check and clean any user input before showing it on your website. For example, use functions or libraries that remove or escape special characters, so attackers cannot run scripts in your page.',
   'No CSRF': 'To protect against CSRF (Cross-Site Request Forgery), add a CSRF token to your forms. This is a hidden value that only your website knows, so hackers cannot trick users into submitting forms without permission. Most frameworks have built-in ways to add CSRF tokens.',
@@ -120,54 +156,41 @@ const FormAnalyzer = forwardRef((props, ref) => {
             <div className="text-gray-800 mb-4 whitespace-pre-line text-lg font-normal">
               {formatSummaryWithBoldHeadings(analysisResult)}
             </div>
-            <div className="flex items-center gap-4 mb-4">
-              <span className="flex items-center gap-2 text-xl font-bold text-purple-700 mb-0">
-                <span role="img" aria-label="score">🏅</span> Score
-              </span>
-              <SecurityBadge score={score} />
-            </div>
-            {badges && badges.length > 0 && (
-              <div className="mt-4">
-                <span className="flex items-center gap-2 text-xl font-bold text-yellow-700 mb-2">
-                  <span role="img" aria-label="badges">🏷️</span> Badges
+
+      <div className="flex items-center gap-4 mb-4">
+        <span className="flex items-center gap-2 text-xl font-bold text-purple-700 mb-0">
+          <span role="img" aria-label="score">🏅</span> Score
+        </span>
+        <SecurityBadge score={score} />
+      </div>
+
+      {/* Show badges below the score, with animated icon and badge names */}
+      {badges && badges.length > 0 && (
+        <div className="mt-4">
+          <span className="flex items-center gap-2 text-xl font-bold text-yellow-700 mb-2">
+            <span role="img" aria-label="badges">🏷️</span> Badges
+          </span>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {badges.map((badge, i) => (
+              <div key={i} className="flex flex-col items-start">
+                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs border border-yellow-300 shadow mb-1 font-semibold">
+                  {badge}
                 </span>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {badges.map((badge, i) => (
-                    <div key={i} className="flex flex-col items-start">
-                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs border border-yellow-300 shadow mb-1 font-semibold">
-                        {badge}
-                      </span>
-                      {RISK_SOLUTIONS[badge] && (
-                        <span className="text-xs text-gray-700 bg-yellow-50 rounded px-2 py-1 mb-2 border border-yellow-200">
-                          <strong>How to fix:</strong> {RISK_SOLUTIONS[badge]}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {RISK_SOLUTIONS[badge] && (
+                  <span className="text-xs text-gray-700 bg-yellow-50 rounded px-2 py-1 mb-2 border border-yellow-200">
+                    <strong>How to fix:</strong> {RISK_SOLUTIONS[badge]}
+                  </span>
+                )}
               </div>
-            )}
-            {secureCode && (
-              <div className="mt-6">
-                <h4 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">
-                  <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
-                </h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold"
-                    onClick={() => {
-                      navigator.clipboard.writeText(secureCode);
-                    }}
-                  >
-                    Copy Code
-                  </button>
-                  <span className="text-xs text-gray-500">Copy the secure code suggestion</span>
-                </div>
-                <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
-                  {secureCode}
-                </pre>
-              </div>
-            )}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Show SecureCodeBlock if secureCode is present */}
+      {secureCode && (
+        <SecureCodeBlock code={secureCode} />
+      )}
           </div>
         )}
       </div>
@@ -177,24 +200,97 @@ const FormAnalyzer = forwardRef((props, ref) => {
 
 export default FormAnalyzer;
 
-// Helper function to bold summary headings
-function formatSummaryWithBoldHeadings(summary) {
-  // Bold lines that start with a number and dot, followed by bold or not bold heading
-  return summary.split('\n').map((line, idx) => {
+// Improved formatter for analyzer result: supports markdown headings, bold, code blocks, lists, matches chat
+function formatSummaryWithBoldHeadings(text) {
+  const lines = text.split('\n');
+  let inCode = false;
+  let codeLang = '';
+  let codeBuffer = [];
+  const elements = [];
+  lines.forEach((line, idx) => {
+    // Code block start/end
+    const codeStart = line.match(/^```([a-zA-Z0-9]*)/);
+    if (codeStart) {
+      if (!inCode) {
+        inCode = true;
+        codeLang = codeStart[1] || '';
+        codeBuffer = [];
+      } else {
+        // End code block
+        elements.push(
+          <pre key={idx} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
+            <code>{codeBuffer.join('\n')}</code>
+          </pre>
+        );
+        inCode = false;
+        codeLang = '';
+        codeBuffer = [];
+      }
+      return;
+    }
+    if (inCode) {
+      codeBuffer.push(line);
+      return;
+    }
+    // Markdown heading (###, ##, #)
+    let headingMatch = line.match(/^(#+)\s*(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const content = headingMatch[2];
+      elements.push(
+        <div key={idx} style={{ fontWeight: 700, fontSize: level === 1 ? '1.5em' : level === 2 ? '1.2em' : '1.1em', margin: '8px 0' }}>
+          {content.replace(/\*\*(.*?)\*\*/g, (m, p1) => p1)}
+        </div>
+      );
+      return;
+    }
     // Bold lines like '1. **Heading**: explanation' or '1. Heading: explanation'
     let numbered = line.match(/^([0-9]+\.\s*)(\*\*([\w\s\-]+)\*\*|[A-Z][\w\s\-]+):(.*)$/);
     if (numbered) {
       let heading = numbered[2].replace(/\*\*/g, '');
       let explanation = numbered[4] || '';
-      return <div key={idx}><b>{numbered[1] + heading}</b>:{explanation}</div>;
+      elements.push(<div key={idx}><b>{numbered[1] + heading}</b>:{explanation}</div>);
+      return;
     }
     // Bold lines like '**Heading**: explanation' or 'Heading: explanation'
     let colonMatch = line.match(/^(\*\*([\w\s\-]+)\*\*|[A-Z][\w\s\-]+):(.*)$/);
     if (colonMatch) {
       let heading = colonMatch[1].replace(/\*\*/g, '');
       let explanation = colonMatch[3] || '';
-      return <div key={idx}><b>{heading}</b>:{explanation}</div>;
+      elements.push(<div key={idx}><b>{heading}</b>:{explanation}</div>);
+      return;
     }
-    return <div key={idx}>{line}</div>;
+    // Bullet points (lines starting with '-', '*', or numbered)
+    if (/^\s*[-*]\s+/.test(line)) {
+      elements.push(<div key={idx} style={{marginLeft: 24, marginBottom: 4}}>&bull; {line.replace(/^\s*[-*]\s+/, '')}</div>);
+      return;
+    }
+    // Numbered list (not heading)
+    if (/^\s*\d+\.\s+/.test(line)) {
+      elements.push(<div key={idx} style={{marginLeft: 24, marginBottom: 4}}>{line}</div>);
+      return;
+    }
+    // Bold inline
+    let inlineBold = line.replace(/\*\*(.*?)\*\*/g, (m, p1) => `<b>${p1}</b>`);
+    if (inlineBold !== line) {
+      elements.push(<div key={idx} dangerouslySetInnerHTML={{ __html: inlineBold }} />);
+      return;
+    }
+    // Empty line
+    if (line.trim() === '') {
+      elements.push(<div key={idx} style={{height: 8}} />);
+      return;
+    }
+    // Normal text
+    elements.push(<div key={idx} style={{marginBottom: 4}}>{line}</div>);
   });
+  // If code block was not closed
+  if (inCode && codeBuffer.length > 0) {
+    elements.push(
+      <pre key={lines.length} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
+        <code>{codeBuffer.join('\n')}</code>
+      </pre>
+    );
+  }
+  return <>{elements}</>;
 }

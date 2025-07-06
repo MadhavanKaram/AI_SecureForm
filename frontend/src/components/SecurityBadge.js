@@ -29,7 +29,7 @@ const SecurityBadge = ({ score }) => {
   }
 
   return (
-    <div className={`inline-block px-5 py-3 rounded-full shadow-lg border-2 border-${color}-300 ${bg} ${text} font-semibold text-lg transition-all animate-bounce`}> 
+    <div className={`inline-block px-5 py-3 rounded-full shadow-lg border-2 border-${color}-300 ${bg} ${text} font-semibold text-lg transition-all`}>
       <span className="mr-2">{level}</span>
       <span className="font-mono">{score !== null ? `${score} / 100` : '--'}</span>
     </div>
