@@ -11,6 +11,7 @@ import SignupPage from './components/SignupPage';
 import './App.css';
 import UserMenu from './components/UserMenu';
 
+
 function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
