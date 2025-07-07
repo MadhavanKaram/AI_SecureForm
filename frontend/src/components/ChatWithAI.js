@@ -8,9 +8,22 @@ import axios from 'axios';
 // Custom hook for code copy popup state
 function useCopyCodePopup() {
   const [copiedIdx, setCopiedIdx] = React.useState(-1);
-  const handleCopy = (code, idx) => {
-    navigator.clipboard.writeText(code);
-    setCopiedIdx(idx);
+  const handleCopy = async (code, idx) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedIdx(idx);
+    } catch (err) {
+      // fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedIdx(idx);
+      } catch {}
+      document.body.removeChild(textarea);
+    }
     setTimeout(() => setCopiedIdx(-1), 1500);
   };
   return [copiedIdx, handleCopy];
