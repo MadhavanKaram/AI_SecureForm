@@ -11,12 +11,24 @@ import SignupPage from './components/SignupPage';
 import './App.css';
 import UserMenu from './components/UserMenu';
 
+// Utility hook to detect desktop (sm and up)
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 640);
+  React.useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 640);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return isDesktop;
+}
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
   const [showSearch, setShowSearch] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const formRef = useRef();
+  const isDesktop = useIsDesktop();
   // Set larger icon size when sidebar is collapsed
   // e.g., 32px when collapsed, 20px when expanded
   const iconSize = collapsed ? 32 : 24;
@@ -84,21 +96,37 @@ function App() {
 
   return (
     <Router>
-      <div className="flex min-h-screen h-screen bg-gray-100 relative">
-        {/* Sidebar */}
-        <aside
-          className={`bg-gray-900 text-white h-full min-h-screen flex flex-col transition-all duration-300 ease-in-out ${
-            collapsed ? 'w-16' : 'w-64'
-          }`}
+      <div className="flex min-h-screen h-screen bg-gray-100 relative overflow-x-hidden">
+        {/* Mobile Hamburger Button - avoid overlap with user menu */}
+        <button
+          className="sm:hidden fixed top-4 left-4 z-40 bg-white rounded-full p-2 shadow border border-gray-200"
+          style={{ marginTop: 0 }}
+          onClick={() => {
+            setSidebarOpen(!sidebarOpen);
+            if (!sidebarOpen) setCollapsed(false); // Always expand sidebar on mobile open
+          }}
+          aria-label="Open sidebar"
         >
-          {/* Collapse Button: top-right when expanded, centered when collapsed */}
-          <div className={`flex ${collapsed ? 'justify-center' : 'justify-end'} p-2`}>
+          <Menu size={24} />
+        </button>
+
+        {/* Sidebar - responsive */}
+        <aside
+          className={`bg-gray-900 text-white h-full min-h-screen flex flex-col transition-all duration-300 ease-in-out
+            fixed z-40 top-0 left-0
+            ${(isDesktop ? collapsed : false) ? 'w-16' : 'w-64'}
+            transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0
+            sm:static sm:block`}
+          style={{ maxWidth: (isDesktop ? collapsed : false) ? 64 : 256 }}
+        >
+          {/* Collapse Button: only show on desktop */}
+          <div className={`flex ${(isDesktop ? collapsed : false) ? 'justify-center' : 'justify-end'} p-2 sm:flex`}> 
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white hidden sm:block"
               title="Toggle Sidebar"
             >
-              <Menu size={collapsed ? 28 : 20} />
+              <Menu size={(isDesktop ? collapsed : false) ? 28 : 20} />
             </button>
           </div>
 
@@ -107,7 +135,8 @@ function App() {
             <SidebarButton
               icon={Pencil}
               label="New Chat"
-              collapsed={collapsed}
+              collapsed={isDesktop ? collapsed : false}
+              sidebarOpen={sidebarOpen || undefined}
               to={isLoggedIn ? "/analyzer" : undefined}
               onClick={() => {
                 if (isLoggedIn) {
@@ -119,7 +148,8 @@ function App() {
             <SidebarButton
               icon={Search}
               label="Search Chats"
-              collapsed={collapsed}
+              collapsed={isDesktop ? collapsed : false}
+              sidebarOpen={sidebarOpen || undefined}
               to={isLoggedIn ? "/analyzer" : undefined}
               onClick={() => {
                 if (isLoggedIn) {
@@ -131,28 +161,39 @@ function App() {
             <SidebarButton
               icon={MessageSquare}
               label="AI Form Security Analyzer"
-              collapsed={collapsed}
+              collapsed={isDesktop ? collapsed : false}
+              sidebarOpen={sidebarOpen || undefined}
               to={isLoggedIn ? "/analyzer" : undefined}
               disabled={!isLoggedIn}
             />
             <SidebarButton
               icon={MessageCircle}
               label="Chat with AI"
-              collapsed={collapsed}
+              collapsed={isDesktop ? collapsed : false}
+              sidebarOpen={sidebarOpen || undefined}
               to={isLoggedIn ? "/chat" : undefined}
               disabled={!isLoggedIn}
             />
           </div>
         </aside>
 
-        {/* Topbar with user menu */}
-        <div className="absolute top-0 right-0 p-4 z-50">
-          <div className="flex flex-col items-center">
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 z-30 sm:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar overlay"
+          />
+        )}
+
+        {/* Topbar with user menu - fixed for mobile, absolute for desktop, avoid overlap */}
+        <div className="fixed sm:absolute top-2 right-2 sm:top-0 sm:right-0 p-2 sm:p-4 z-50 pointer-events-none">
+          <div className="flex flex-col items-center pointer-events-auto">
             {isLoggedIn && <UserMenu />}
           </div>
         </div>
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-2 sm:p-6 mt-16 sm:mt-0">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/analyzer" element={<FormAnalyzer ref={formRef} />} />

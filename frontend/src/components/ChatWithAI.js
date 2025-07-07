@@ -237,7 +237,7 @@ function ChatWithAI() {
   };
 
   return (
-    <div className="max-w-[1200px] w-full mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col min-h-[70vh] h-[80vh]">
+    <div className="w-full sm:max-w-[1200px] sm:mx-auto mt-4 p-2 sm:p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col min-h-[70vh] h-[80vh]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Chat with AI</h2>
         <div className="flex gap-2">

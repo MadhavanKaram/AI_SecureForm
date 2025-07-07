@@ -26,16 +26,16 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-2 sm:p-0">
+      <div className="bg-white p-4 sm:p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-indigo-700 text-center">Login</h2>
         {error && <div className="text-red-600 mb-4">{error}</div>}
         <form onSubmit={handleLogin} className="space-y-4">
-          <input type="email" className="w-full p-3 border rounded" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input type="email" className="w-full p-3 border rounded text-base" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
-              className="w-full p-3 border rounded"
+              className="w-full p-3 border rounded text-base"
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}

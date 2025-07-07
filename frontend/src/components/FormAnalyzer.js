@@ -18,8 +18,9 @@ function SecureCodeBlock({ code }) {
         <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
       </h4>
       <div className="my-2" style={{position: 'relative', overflowX: 'auto'}}>
-        <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm flex items-start" style={{overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, position: 'relative'}}>
-          <code style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', flex: 1}}>{code}</code>
+        <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm flex items-start"
+          style={{overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, position: 'relative', minWidth: 0}}>
+          <code style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', flex: 1, minWidth: 0}}>{code}</code>
           <button
             className="ml-2 mt-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs font-semibold hover:bg-gray-700 transition-colors duration-150 flex items-center gap-1"
             onClick={handleCopy}
@@ -143,7 +144,7 @@ const FormAnalyzer = forwardRef((props, ref) => {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto mt-10 p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-8">
+    <div className="max-w-[1600px] w-full mx-auto mt-4 p-2 sm:p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 animate-fade-in flex flex-col md:flex-row gap-4 sm:gap-8">
       {/* Left: Form */}
       <div className="flex-1 min-w-[350px] max-w-[520px]">
         <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 text-center flex items-center justify-center gap-2">

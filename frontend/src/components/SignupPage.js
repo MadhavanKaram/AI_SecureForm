@@ -28,8 +28,8 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
-      <form onSubmit={handleSignup} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 p-2 sm:p-0">
+      <form onSubmit={handleSignup} className="bg-white p-4 sm:p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-indigo-700">Sign Up</h2>
         {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
         <input
@@ -37,7 +37,7 @@ const SignupPage = () => {
           placeholder="Username"
           value={username}
           onChange={e => setUsername(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
           required
         />
         <input
@@ -45,7 +45,7 @@ const SignupPage = () => {
           placeholder="Email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
           required
         />
         <div className="relative mb-4">
@@ -54,7 +54,7 @@ const SignupPage = () => {
             placeholder="Set Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
             required
           />
           <span
