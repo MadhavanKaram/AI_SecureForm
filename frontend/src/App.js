@@ -9,6 +9,7 @@ import HomePage from './components/HomePage';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
 import './App.css';
+import UserMenu from './components/UserMenu';
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);
@@ -143,6 +144,12 @@ function App() {
           </div>
         </aside>
 
+        {/* Topbar with user menu */}
+        <div className="absolute top-0 right-0 p-4 z-50">
+          <div className="flex flex-col items-center">
+            {isLoggedIn && <UserMenu />}
+          </div>
+        </div>
         {/* Main Content */}
         <main className="flex-1 p-6">
           <Routes>

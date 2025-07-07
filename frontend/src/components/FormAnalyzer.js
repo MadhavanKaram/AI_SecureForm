@@ -1,4 +1,4 @@
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import SecurityBadge from './SecurityBadge';
 import axios from 'axios';
 
@@ -17,23 +17,26 @@ function SecureCodeBlock({ code }) {
       <h4 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">
         <span role="img" aria-label="secure">✅</span> Secure Code Suggestion
       </h4>
-      <div className="flex items-center gap-2 mb-2">
-        <button
-          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold"
-          onClick={handleCopy}
-        >
-          Copy Code
-        </button>
-        <span className="text-xs text-gray-500">Copy the secure code suggestion</span>
+      <div className="my-2" style={{position: 'relative', overflowX: 'auto'}}>
+        <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm flex items-start" style={{overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, position: 'relative'}}>
+          <code style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', flex: 1}}>{code}</code>
+          <button
+            className="ml-2 mt-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs font-semibold hover:bg-gray-700 transition-colors duration-150 flex items-center gap-1"
+            onClick={handleCopy}
+            style={{outline:'none', alignSelf: 'flex-start'}}
+            title="Copy code"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="inline-block align-middle" style={{marginRight: 2}}>
+              <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+              <rect x="3" y="3" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Copy
+          </button>
+          {copied && (
+            <span className="ml-2 mt-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold z-20">Copied!</span>
+          )}
+        </pre>
       </div>
-      <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm">
-        {code}
-      </pre>
-      {copied && (
-        <div className="absolute top-0 right-0 mt-2 mr-2 bg-green-500 text-white px-3 py-1 rounded shadow text-xs font-semibold animate-fade-in-out z-50">
-          Copied!
-        </div>
-      )}
     </div>
   );
 }
@@ -69,12 +72,34 @@ const RISK_SOLUTIONS = {
 };
 
 const FormAnalyzer = forwardRef((props, ref) => {
-  const [formCode, setFormCode] = useState('');
-  const [analysisResult, setAnalysisResult] = useState('');
-  const [score, setScore] = useState(null);
-  const [badges, setBadges] = useState([]);
-  const [secureCode, setSecureCode] = useState('');
+  const [formCode, setFormCode] = useState(() => localStorage.getItem('sf_form_code') || '');
+  const [analysisResult, setAnalysisResult] = useState(() => localStorage.getItem('sf_analysis_result') || '');
+  const [score, setScore] = useState(() => {
+    const val = localStorage.getItem('sf_score');
+    return val !== null ? JSON.parse(val) : null;
+  });
+  const [badges, setBadges] = useState(() => {
+    const val = localStorage.getItem('sf_badges');
+    return val ? JSON.parse(val) : [];
+  });
+  const [secureCode, setSecureCode] = useState(() => localStorage.getItem('sf_secure_code') || '');
   const [loading, setLoading] = useState(false);
+  // Persist form state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sf_form_code', formCode);
+  }, [formCode]);
+  useEffect(() => {
+    localStorage.setItem('sf_analysis_result', analysisResult);
+  }, [analysisResult]);
+  useEffect(() => {
+    localStorage.setItem('sf_score', JSON.stringify(score));
+  }, [score]);
+  useEffect(() => {
+    localStorage.setItem('sf_badges', JSON.stringify(badges));
+  }, [badges]);
+  useEffect(() => {
+    localStorage.setItem('sf_secure_code', secureCode);
+  }, [secureCode]);
 
   useImperativeHandle(ref, () => ({
     resetForm: () => {

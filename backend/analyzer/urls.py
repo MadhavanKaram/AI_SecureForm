@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubmitFormView, SubmissionHistoryView, SubmissionSearchView, AnalyzeFormView, UserDetailsView, SignupView, LoginView, check_auth_view, ChatAPIView
+from .views import SubmitFormView, SubmissionHistoryView, SubmissionSearchView, AnalyzeFormView, UserDetailsView, SignupView, LoginView, check_auth_view, ChatAPIView, logout_view
 
 urlpatterns = [
     path('submit/', SubmitFormView.as_view(), name='submit-form'),
@@ -10,6 +10,7 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('login/', LoginView.as_view(), name='login'),
     path('check-auth/', check_auth_view, name='check-auth'),
+    path('logout/', logout_view, name='logout'),
     path('chat/', ChatAPIView.as_view(), name='chat'),
 ]
 # The yellow line in many code editors (like VS Code or PyCharm) usually indicates a warning.

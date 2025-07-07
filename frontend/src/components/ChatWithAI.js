@@ -4,12 +4,25 @@ import axios from 'axios';
 // Formatter for AI response: bold subheadings, point-wise, similar to FormAnalyzer
 // Unified formatter for AI response: bold subheadings, point-wise, matches FormAnalyzer
 // Improved formatter for AI response: supports markdown headings, bold, code blocks, lists, and matches FormAnalyzer
-function formatAIResponse(text) {
-  const lines = text.split('\n');
+
+// Custom hook for code copy popup state
+function useCopyCodePopup() {
+  const [copiedIdx, setCopiedIdx] = React.useState(-1);
+  const handleCopy = (code, idx) => {
+    navigator.clipboard.writeText(code);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(-1), 1500);
+  };
+  return [copiedIdx, handleCopy];
+}
+
+function formatAIResponse(text, copiedIdx, handleCopy) {
+  const lines = text.split('\n'); 
   let inCode = false;
   let codeLang = '';
   let codeBuffer = [];
   const elements = [];
+
   lines.forEach((line, idx) => {
     // Code block start/end
     const codeStart = line.match(/^```([a-zA-Z0-9]*)/);
@@ -19,11 +32,29 @@ function formatAIResponse(text) {
         codeLang = codeStart[1] || '';
         codeBuffer = [];
       } else {
-        // End code block
+        // End code block with copy button
+        const codeText = codeBuffer.join('\n');
         elements.push(
-          <pre key={idx} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
-            <code>{codeBuffer.join('\n')}</code>
-          </pre>
+          <div key={idx} className="my-2" style={{position: 'relative', overflowX: 'auto'}}>
+            <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm flex items-start" style={{overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, position: 'relative'}}>
+              <code style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', flex: 1}}>{codeText}</code>
+              <button
+                className="ml-2 mt-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs font-semibold hover:bg-gray-700 transition-colors duration-150 flex items-center gap-1"
+                onClick={() => handleCopy(codeText, idx)}
+                style={{outline:'none', alignSelf: 'flex-start'}}
+                title="Copy code"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="inline-block align-middle" style={{marginRight: 2}}>
+                  <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+                  <rect x="3" y="3" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                Copy
+              </button>
+              {copiedIdx === idx && (
+                <span className="ml-2 mt-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold z-20">Copied!</span>
+              )}
+            </pre>
+          </div>
         );
         inCode = false;
         codeLang = '';
@@ -90,9 +121,23 @@ function formatAIResponse(text) {
   // If code block was not closed
   if (inCode && codeBuffer.length > 0) {
     elements.push(
-      <pre key={lines.length} className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm my-2">
-        <code>{codeBuffer.join('\n')}</code>
-      </pre>
+      <div key={lines.length} className="my-2" style={{position: 'relative', overflowX: 'auto'}}>
+        <pre className="bg-gray-900 text-green-100 rounded-lg p-4 overflow-x-auto text-sm flex items-start" style={{overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, position: 'relative'}}>
+          <code style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', flex: 1}}>{codeBuffer.join('\n')}</code>
+          <button
+            className="ml-2 mt-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs font-semibold hover:bg-gray-700 transition-colors duration-150 flex items-center gap-1"
+            onClick={() => handleCopy(codeBuffer.join('\n'), lines.length)}
+            style={{outline:'none', alignSelf: 'flex-start'}}
+            title="Copy code"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="inline-block align-middle" style={{marginRight: 2}}>
+              <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+              <rect x="3" y="3" width="13" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Copy
+          </button>
+        </pre>
+      </div>
     );
   }
   return (
@@ -114,7 +159,9 @@ function formatAIResponse(text) {
 }
 
 
+
 function ChatWithAI() {
+  const textareaRef = useRef(null);
   // Modal for chat history
   const [showHistory, setShowHistory] = useState(false);
   const [chatHistory, setChatHistory] = useState(() => {
@@ -129,8 +176,17 @@ function ChatWithAI() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  // For code copy popup in AI responses
+  const [copiedIdx, handleCopy] = useCopyCodePopup();
 
   // Persist chat to localStorage
+  // Auto-grow textarea as user types
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [input]);
   useEffect(() => {
     localStorage.setItem('sf_chat_ai', JSON.stringify(messages));
   }, [messages]);
@@ -217,11 +273,11 @@ function ChatWithAI() {
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'ai' ? (
               <div className="w-full max-w-[80%]">
-                {formatAIResponse(msg.content)}
+                {formatAIResponse(msg.content, copiedIdx, handleCopy)}
               </div>
             ) : (
               <div className="px-4 py-2 rounded-lg max-w-[80%] break-words bg-indigo-100 text-right">
-                {msg.content}
+                <pre className="bg-transparent border-0 p-0 m-0 text-right break-words whitespace-pre-wrap font-sans text-base leading-relaxed" style={{boxShadow:'none',background:'none'}}>{msg.content}</pre>
               </div>
             )}
           </div>
@@ -230,16 +286,41 @@ function ChatWithAI() {
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={sendMessage} className="flex gap-2">
-        <input
-          className="flex-1 border rounded-lg p-3"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Type your message..."
-          disabled={loading}
-        />
-        <button type="submit" className="bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-600" disabled={loading || !input.trim()}>
-          Send
-        </button>
+        <div className="flex-1 flex items-end">
+          <textarea
+            ref={textareaRef}
+            className="w-full border rounded-lg p-3 resize-none min-h-[44px] max-h-40"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Type your message..."
+            disabled={loading}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+              }
+            }}
+            style={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              scrollbarWidth: 'none', // Firefox
+              msOverflowStyle: 'none', // IE/Edge
+            }}
+            rows={1}
+          />
+          <style>{`
+            textarea::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+        </div>
+        <div className="flex items-end pb-1">
+          <button type="submit" className="bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-600" style={{height:44}} disabled={loading || !input.trim()}>
+            Send
+          </button>
+        </div>
       </form>
     </div>
   );

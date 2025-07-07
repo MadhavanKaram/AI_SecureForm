@@ -1,7 +1,18 @@
+from django.contrib.auth import logout
+from rest_framework.decorators import api_view
+
+# API endpoint to log out the user
+@api_view(['POST'])
+def logout_view(request):
+    logout(request)
+    return Response({'success': True})
 from .chat_models import ChatSession, ChatMessage
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework import status
 from django.utils import timezone
 
@@ -199,24 +210,22 @@ class AnalyzeFormView(APIView):
             'submission_id': submission.id
         })
 
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt, name='dispatch')
 class UserDetailsView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        user = request.user
-        if user.is_authenticated:
-            return Response({
-                'username': user.username,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'is_staff': user.is_staff,
-                'is_superuser': user.is_superuser,
-            })
+        # Always return a generic response, never expose username
+        if request.user.is_authenticated:
+            return Response({'status': 'authenticated'})
         else:
             return Response({'error': 'Not authenticated'}, status=401)
 
 class SignupView(APIView):
     def post(self, request):
+        from django.contrib.auth import login
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
@@ -225,10 +234,12 @@ class SignupView(APIView):
         if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
             return Response({'success': False, 'error': 'Username or email already exists.'}, status=400)
         user = User.objects.create_user(username=username, email=email, password=password)
+        login(request, user)  # Log the user in after signup
         return Response({'success': True})
 
 class LoginView(APIView):
     def post(self, request):
+        from django.contrib.auth import login
         email = request.data.get('email')
         password = request.data.get('password')
         try:
@@ -237,6 +248,7 @@ class LoginView(APIView):
             return Response({'success': False, 'error': 'Invalid email or password.'}, status=400)
         user = authenticate(username=user.username, password=password)
         if user is not None:
+            login(request, user)  # Set session so user is authenticated
             return Response({'success': True})
         else:
             return Response({'success': False, 'error': 'Invalid email or password.'}, status=400)
